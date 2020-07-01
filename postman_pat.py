@@ -354,6 +354,11 @@ class BurpExtender(IBurpExtender, ITab):
             req = item.get('request')
             name = item.get('name')
             if req:
+
+                if req.get('method', "").upper() == "OPTIONS":
+                    # ignore OTIONS requests
+                    continue
+
                 url = req.get('url')
                 if type(url) == dict:
                     url = url.get('raw')
@@ -362,6 +367,7 @@ class BurpExtender(IBurpExtender, ITab):
                     self.warn("Endpoint '{}' has no URL".format(name))
                 
                 else:
+
                     self._findEnvInString(url)
 
                     w = 34 - (level*2)
