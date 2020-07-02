@@ -8,6 +8,7 @@ from burp import ITab
 from javax import swing
 from javax.swing.filechooser import FileNameExtensionFilter
 from javax.swing.table import DefaultTableModel, AbstractTableModel
+from javax.swing.border import EmptyBorder
 from java.awt import BorderLayout, Color, Font
 from java.awt.event import MouseAdapter
 
@@ -18,6 +19,7 @@ import os
 import re
 import sys
 import textwrap
+import traceback
 from urlparse import urlparse
 
 
@@ -34,23 +36,6 @@ def fix_exception(func):
             raise
     return wrapper
 
-
-def wrap_text(in_str, width, indent=0, remove_single_breaks=False):
-    if remove_single_breaks:
-        in_str = re.sub(r"""(?<=[!-~])[ \t]*\r?\n[ \t]*(?=[!-~])""", r" ", in_str)  # remove single line breaks
-
-    out = []
-    for line in [x.strip() for x in in_str.splitlines()]:
-        if len(line):
-            if width > 0:
-                out.extend(textwrap.wrap(line, width))
-            else:
-                out.append(line)
-        else:
-            out.append('')
-
-    return ('\n' + ' '*indent).join(out)
-    
 
 class BurpExtender(IBurpExtender, ITab):
 
@@ -113,8 +98,11 @@ class BurpExtender(IBurpExtender, ITab):
         logPane.add(swing.JScrollPane(self._log))
 
         tablePane = swing.JPanel(BorderLayout())
-        tablePane.add(swing.JLabel("Environment Variables"), BorderLayout.NORTH)
-        
+        envLabel = swing.JLabel("Environment Variables")
+        envLabel.setBorder(EmptyBorder(5, 5, 5, 5))
+        envLabel.setFont(Font(envLabel.getFont().getName(), Font.BOLD, envLabel.getFont().getSize() + 2))
+        tablePane.add(envLabel, BorderLayout.NORTH)
+       
         self._envTable = swing.JTable(DefaultTableModel([], self._cols))
         self._envTable.getTableHeader().setReorderingAllowed(False)
         tableMenu = swing.JPopupMenu()
