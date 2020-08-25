@@ -5,9 +5,10 @@ from burp import ITextEditor
 from burp import ITab
 
 # Java imports
+from java.lang import Class
 from javax import swing
 from javax.swing.filechooser import FileNameExtensionFilter
-from javax.swing.table import DefaultTableModel, AbstractTableModel
+from javax.swing.table import DefaultTableModel, AbstractTableModel, DefaultTableCellRenderer
 from javax.swing.border import EmptyBorder
 from java.awt import BorderLayout, Color, Font
 from java.awt.event import MouseAdapter
@@ -114,6 +115,8 @@ class BurpExtender(IBurpExtender, ITab):
         self._envTable.setComponentPopupMenu(tableMenu)
         listener = self._envTableListener(self)
         self._envTable.addMouseListener(listener)
+        renderer = self._envTableRenderer()
+        self._envTable.setDefaultRenderer(Class.forName("java.lang.Object"), renderer)
 
         tablePaneMenu = swing.JPopupMenu()
         tablePaneMenu.add(swing.JMenuItem("Add New", actionPerformed=self._addEnv))
@@ -141,6 +144,16 @@ class BurpExtender(IBurpExtender, ITab):
 
         callbacks.setExtensionName(NAME)
         callbacks.addSuiteTab(self)
+
+    class _envTableRenderer(DefaultTableCellRenderer):
+
+        def getTableCellRendererComponent(self, table, value, isSelected, hasFocus, row, col):
+            c = DefaultTableCellRenderer.getTableCellRendererComponent(self, table, value, isSelected, hasFocus, row, col)
+            if col == 1 and value.startswith("{{") and value.endswith("}}"):
+                c.setForeground(Color.RED)
+            else:
+                c.setForeground(table.getForeground())
+            return self
 
     class _envTableListener(MouseAdapter):
 
