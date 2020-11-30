@@ -1,3 +1,7 @@
+__author__ = "b4dpxl"
+__license__ = "GPL"
+__version__ = "1.1"
+
 from burp import IBurpExtender
 from burp import IMessageEditorTabFactory
 from burp import IMessageEditorTab
@@ -314,7 +318,7 @@ class BurpExtender(IBurpExtender, ITab):
 
     def createRequests(self, event):
         self._rebuildEnvs()
-        for req, obj in self._requests.items():
+        for name, obj in self._requests.items():
 
             o_url = urlparse(self._replace_envs(obj.get('url')))
             https = o_url.scheme.lower() == "https"
@@ -343,9 +347,9 @@ class BurpExtender(IBurpExtender, ITab):
                 "\n\n" + 
                 self._replace_envs(obj.get('body'))
             )
-            print(host, port, https, req)
+            print(host, port, https, name)
             try:
-                self._callbacks.sendToRepeater(host, port, https, full_request, req)
+                self._callbacks.sendToRepeater(host, port, https, full_request, name)
             except Exception as e:
                 self.error("Unable to create Repeater tab - check all environment variables?")
                 self.error(e)
@@ -436,6 +440,20 @@ class BurpExtender(IBurpExtender, ITab):
                         self.log(' '*(indent+2) + body.replace("\n", "\n" + ' '*(indent+2)) )
                         self._findEnvInString(val)
 
+                    # if len(name) > 25:
+                    #     name = name[:25] + "..."
+
+                    if not name:
+                        name = "Undefined"
+
+                    if name in self._requests:
+                        # print("name is not unique")
+                        cnt = 1
+                        base_name = name
+                        while name in self._requests:
+                            name = "{} ({})".format(base_name, cnt)
+                            cnt += 1
+                        print("Renamed '{}' to '{}'".format(base_name, name))
 
                     self._requests[name] = {
                         'method': req.get('method'),
