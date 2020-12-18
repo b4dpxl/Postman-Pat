@@ -49,9 +49,9 @@ def fix_exception(func):
         try:
             return func(self, *args, **kwargs)
         except Exception:
-            sys.stderr.write('\n\n*** PYTHON EXCEPTION\n')
-            traceback.print_exc(file=sys.stderr)
-            raise
+            print("\n\n*** PYTHON EXCEPTION")
+            print(traceback.format_exc(e))
+            print("*** END\n")
     return wrapper
 
 
