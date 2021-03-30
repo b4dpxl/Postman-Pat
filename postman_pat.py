@@ -5,7 +5,7 @@ History:
 1.0.0: First version
 1.1.0: Handled requests with the same name
 1.2.0: Added list of requests to a table and made them selectable and allowed name changes. Save the last file path. Logs are coloured.
-1.3.0: Fixed issue with checking body
+1.3.0: Fixed issue with checking body and added HTTP Method to table
 """
 
 __author__ = "b4dpxl"
@@ -61,7 +61,7 @@ class BurpExtender(IBurpExtender, ITab):
     _callbacks = None
     _helpers = None
     _envCols = ('Name', 'Value')
-    _reqCols = ('Generate?', 'Name')
+    _reqCols = ('Generate?', 'Method', 'Name')
     _requests = {}
     _hasScript = False
 
@@ -169,6 +169,8 @@ class BurpExtender(IBurpExtender, ITab):
         self._reqTable.getTableHeader().setReorderingAllowed(False)
         self._reqTable.getColumnModel().getColumn(0).setMaxWidth(150)
         self._reqTable.getColumnModel().getColumn(0).setMinWidth(150)
+        self._reqTable.getColumnModel().getColumn(1).setMaxWidth(150)
+        self._reqTable.getColumnModel().getColumn(1).setMinWidth(150)
         scrl2 = swing.JScrollPane(self._reqTable)
         reqTablePane.add(scrl2)
         # ### end requests
@@ -406,7 +408,7 @@ Name/Group                          Method  Details
         for row in range(model.getRowCount()):
             if bool(model.getValueAt(row, 0)):
 
-                name = model.getValueAt(row, 1)
+                name = model.getValueAt(row, 2)
                 obj = self._requests[row]
 
                 url = self._replace_envs(obj.get('url'))
@@ -555,7 +557,7 @@ Name/Group                          Method  Details
                         'body': body,
                         'headers': headers
                     })
-                    self._reqTable.getModel().addRow([True, name])
+                    self._reqTable.getModel().addRow([True, req.get('method').upper(), name])
                     self.log('')
 
             # recur
