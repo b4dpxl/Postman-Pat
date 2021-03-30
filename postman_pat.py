@@ -5,11 +5,12 @@ History:
 1.0.0: First version
 1.1.0: Handled requests with the same name
 1.2.0: Added list of requests to a table and made them selectable and allowed name changes. Save the last file path. Logs are coloured.
+1.3.0: Fixed issue with checking body
 """
 
 __author__ = "b4dpxl"
 __license__ = "GPL"
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 from burp import IBurpExtender
 from burp import IMessageEditorTabFactory
@@ -534,7 +535,7 @@ Name/Group                          Method  Details
                         # TODO what if it's not raw?
                         body = req.get('body').get('raw', '')
                         self.log(' '*(indent+2) + body.replace("\n", "\n" + ' '*(indent+2)) )
-                        self._findEnvInString(val)
+                        self._findEnvInString(body)
 
                     if not name:
                         name = "Undefined"
