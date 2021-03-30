@@ -61,7 +61,7 @@ class BurpExtender(IBurpExtender, ITab):
     _callbacks = None
     _helpers = None
     _envCols = ('Name', 'Value')
-    _reqCols = ('Generate?', 'Method', 'Name')
+    _reqCols = ('Generate?', 'name', 'Method')
     _requests = {}
     _hasScript = False
 
@@ -169,8 +169,8 @@ class BurpExtender(IBurpExtender, ITab):
         self._reqTable.getTableHeader().setReorderingAllowed(False)
         self._reqTable.getColumnModel().getColumn(0).setMaxWidth(150)
         self._reqTable.getColumnModel().getColumn(0).setMinWidth(150)
-        self._reqTable.getColumnModel().getColumn(1).setMaxWidth(150)
-        self._reqTable.getColumnModel().getColumn(1).setMinWidth(150)
+        self._reqTable.getColumnModel().getColumn(2).setMaxWidth(150)
+        self._reqTable.getColumnModel().getColumn(2).setMinWidth(150)
         scrl2 = swing.JScrollPane(self._reqTable)
         reqTablePane.add(scrl2)
         # ### end requests
@@ -408,7 +408,7 @@ Name/Group                          Method  Details
         for row in range(model.getRowCount()):
             if bool(model.getValueAt(row, 0)):
 
-                name = model.getValueAt(row, 2)
+                name = model.getValueAt(row, 1)
                 obj = self._requests[row]
 
                 url = self._replace_envs(obj.get('url'))
@@ -557,7 +557,7 @@ Name/Group                          Method  Details
                         'body': body,
                         'headers': headers
                     })
-                    self._reqTable.getModel().addRow([True, req.get('method').upper(), name])
+                    self._reqTable.getModel().addRow([True, name, req.get('method').upper()])
                     self.log('')
 
             # recur
