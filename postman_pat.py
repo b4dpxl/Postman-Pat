@@ -105,7 +105,6 @@ class BurpExtender(IBurpExtender, ITab):
         box2.add(self._environmentLabel)  
         controlPane.add(box2)
 
-        controlPane.add(swing.JButton('Create Requests', actionPerformed=self.createRequests))  
         # ### end Top "controls" pane
         
         # ### instructions
@@ -177,20 +176,28 @@ class BurpExtender(IBurpExtender, ITab):
         logPane = swing.JPanel(BorderLayout())
 
         buttonBox = swing.JPanel(FlowLayout(FlowLayout.LEFT, 20, 0))
-        box3 = swing.Box.createHorizontalBox()
+        requestButtonBox = swing.Box.createHorizontalBox()
         self._selectButtons = [
             swing.JButton('Select All', actionPerformed=self.selectAll),
             swing.JButton('Select None', actionPerformed=self.selectNone),
             swing.JButton('Invert Selection', actionPerformed=self.selectInvert)
         ]
         for btn in self._selectButtons:
-            box3.add(btn)  
+            requestButtonBox.add(btn)  
             btn.setEnabled(False)
-        buttonBox.add(box3)
+
+        buttonBox.add(requestButtonBox)
+
+        self._createRequestsButton = swing.JButton('Create Requests', actionPerformed=self.createRequests)
+        self._createRequestsButton.setEnabled(False)
+        requestButtonBox.add(self._createRequestsButton)
+
+        buttonBox.add(self._createRequestsButton)
+
         self._logButton = swing.JButton('Clear Log', actionPerformed=self.clearLog)
         self._logButton.setEnabled(False)
         buttonBox.add(self._logButton)
-        # box3.add(self._logButton)  
+
         logPane.add(buttonBox, BorderLayout.NORTH)
 
         self._log = swing.JTextPane()
@@ -351,6 +358,7 @@ Name/Group                          Method  Details
 
                         for btn in self._selectButtons:
                             btn.setEnabled(True)
+                        self._createRequestsButton.setEnabled(True)
                         self._topControlsPane.resetToPreferredSizes()
                 
                 except Exception as e:
