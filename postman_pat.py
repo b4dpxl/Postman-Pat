@@ -6,16 +6,14 @@ History:
 1.1.0: Handled requests with the same name
 1.2.0: Added list of requests to a table and made them selectable and allowed name changes. Save the last file path. Logs are coloured.
 1.3.0: Fixed issue with checking body and added HTTP Method to table
+1.4.0: Added "Select all/none/invert" buttons for Luca
 """
 
 __author__ = "b4dpxl"
 __license__ = "GPL"
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 from burp import IBurpExtender
-from burp import IMessageEditorTabFactory
-from burp import IMessageEditorTab
-from burp import ITextEditor
 from burp import ITab
 
 import base64
@@ -24,20 +22,19 @@ import json
 import os
 import re
 import sys
-import textwrap
 import traceback
 from urlparse import urlparse
 
 # Java imports
-from java.awt import BorderLayout, Color, Font
+from java.awt import BorderLayout, FlowLayout, Color, Font
 from java.awt.event import MouseAdapter
 from java.io import File
 from java.lang import Class
 from javax import swing
 from javax.swing.filechooser import FileNameExtensionFilter
-from javax.swing.table import DefaultTableModel, AbstractTableModel, DefaultTableCellRenderer
+from javax.swing.table import DefaultTableModel, DefaultTableCellRenderer
 from javax.swing.border import EmptyBorder
-from javax.swing.text import AttributeSet, SimpleAttributeSet, StyleContext, StyleConstants
+from javax.swing.text import  SimpleAttributeSet, StyleConstants
 
 
 NAME = "Postman Pat"
@@ -50,9 +47,9 @@ def fix_exception(func):
         try:
             return func(self, *args, **kwargs)
         except Exception:
-            print("\n\n*** PYTHON EXCEPTION")
-            print(traceback.format_exc(e))
-            print("*** END\n")
+            self._callbacks.printError("\n\n*** PYTHON EXCEPTION")
+            self._callbacks.printError(traceback.format_exc(e))
+            self._callbacks.printError("*** END\n")
     return wrapper
 
 
@@ -90,6 +87,7 @@ class BurpExtender(IBurpExtender, ITab):
 
         # ### Top "buttons" pane
         controlPane = swing.JPanel()
+        controlPane.setBorder(EmptyBorder(10, 20, 0, 10))
         controlPane.setLayout(swing.BoxLayout(controlPane, swing.BoxLayout.PAGE_AXIS))
         controlPane.setAlignmentX(swing.Box.LEFT_ALIGNMENT)
 
@@ -178,9 +176,22 @@ class BurpExtender(IBurpExtender, ITab):
         # ### Logs
         logPane = swing.JPanel(BorderLayout())
 
+        buttonBox = swing.JPanel(FlowLayout(FlowLayout.LEFT, 20, 0))
         box3 = swing.Box.createHorizontalBox()
-        box3.add(swing.JButton('Clear Log', actionPerformed=self.clearLog))  
-        logPane.add(box3, BorderLayout.NORTH)
+        self._selectButtons = [
+            swing.JButton('Select All', actionPerformed=self.selectAll),
+            swing.JButton('Select None', actionPerformed=self.selectNone),
+            swing.JButton('Invert Selection', actionPerformed=self.selectInvert)
+        ]
+        for btn in self._selectButtons:
+            box3.add(btn)  
+            btn.setEnabled(False)
+        buttonBox.add(box3)
+        self._logButton = swing.JButton('Clear Log', actionPerformed=self.clearLog)
+        self._logButton.setEnabled(False)
+        buttonBox.add(self._logButton)
+        # box3.add(self._logButton)  
+        logPane.add(buttonBox, BorderLayout.NORTH)
 
         self._log = swing.JTextPane()
         self._log.setEditable(False)
@@ -189,10 +200,12 @@ class BurpExtender(IBurpExtender, ITab):
         # ### end Logs
 
         # ### add panels
-        topControlsPane = swing.JSplitPane(swing.JSplitPane.HORIZONTAL_SPLIT, controlPane, instructionsPane)
-        p1 = swing.JSplitPane(swing.JSplitPane.VERTICAL_SPLIT, topControlsPane, envTablePane)
+        self._topControlsPane = swing.JSplitPane(swing.JSplitPane.HORIZONTAL_SPLIT, controlPane, instructionsPane)
+        p1 = swing.JSplitPane(swing.JSplitPane.VERTICAL_SPLIT, self._topControlsPane, envTablePane)
         p2 = swing.JSplitPane(swing.JSplitPane.VERTICAL_SPLIT, p1, reqTablePane)
+        p2.setResizeWeight(0.5)
         self._panel = swing.JSplitPane(swing.JSplitPane.VERTICAL_SPLIT, p2, logPane)
+        self._panel.setResizeWeight(0.6)
         # ### end add panels
 
         callbacks.setExtensionName(NAME)
@@ -252,6 +265,22 @@ class BurpExtender(IBurpExtender, ITab):
 
     def clearLog(self, event):
         self._log.setText('')
+        self._logButton.setEnabled(False)
+
+    def selectAll(self, event):
+        model = self._reqTable.getModel()
+        for row in range(model.getRowCount()):
+            model.setValueAt(True, row, 0)
+
+    def selectNone(self, event):
+        model = self._reqTable.getModel()
+        for row in range(model.getRowCount()):
+            model.setValueAt(False, row, 0)
+
+    def selectInvert(self, event):
+        model = self._reqTable.getModel()
+        for row in range(model.getRowCount()):
+            model.setValueAt(not model.getValueAt(row, 0), row, 0)
 
     def getTabCaption(self):
         return NAME
@@ -269,6 +298,7 @@ class BurpExtender(IBurpExtender, ITab):
             StyleConstants.setBold(aset, True);
 
         doc.insertString(self._log.getDocument().getLength(), msg, aset)
+        self._logButton.setEnabled(True)
 
     def info(self, msg):
         self.log("[*] ", bold=True, end='')
@@ -318,6 +348,10 @@ Name/Group                          Method  Details
 
                         if self._hasScript:
                             self.warn("Collection uses scripts - check these manually.")
+
+                        for btn in self._selectButtons:
+                            btn.setEnabled(True)
+                        self._topControlsPane.resetToPreferredSizes()
                 
                 except Exception as e:
                     self.error("Unable to parse JSON file. Did you try and load an environment file?")
@@ -356,6 +390,10 @@ Name/Group                          Method  Details
                                         self._addOrUpdateEnv(key, "{{UNABLE TO PARSE}}")
                                         self.error("Unable to parse environment variable value for '{}'".format(key))
                                         print(traceback.format_exc(e))
+
+                        self._environmentLabel.setText("Using " + file)
+                        self._topControlsPane.resetToPreferredSizes()
+
                 else:
                     self.error("Unable to parse Environment file")
             else:
