@@ -58,7 +58,7 @@ class BurpExtender(IBurpExtender, ITab):
     _callbacks = None
     _helpers = None
     _envCols = ('Name', 'Value')
-    _reqCols = ('Generate?', 'name', 'Method')
+    _reqCols = ('Generate?', 'Name', 'Method')
     _requests = {}
     _hasScript = False
 
