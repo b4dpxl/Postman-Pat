@@ -7,7 +7,7 @@ History:
 1.2.0: Added list of requests to a table and made them selectable and allowed name changes. Save the last file path. Logs are coloured.
 1.3.0: Fixed issue with checking body and added HTTP Method to table
 1.4.0: Added "Select all/none/invert" buttons for Luca
-1.5.0: Added URL to requests table
+1.5.0: Added "URL" to requests table
 """
 
 __author__ = "b4dpxl"
