@@ -7,6 +7,7 @@ History:
 1.2.0: Added list of requests to a table and made them selectable and allowed name changes. Save the last file path. Logs are coloured.
 1.3.0: Fixed issue with checking body and added HTTP Method to table
 1.4.0: Added "Select all/none/invert" buttons for Luca
+1.5.0: Added URL to requests table
 """
 
 __author__ = "b4dpxl"
@@ -58,7 +59,7 @@ class BurpExtender(IBurpExtender, ITab):
     _callbacks = None
     _helpers = None
     _envCols = ('Name', 'Value')
-    _reqCols = ('Generate?', 'Name', 'Method')
+    _reqCols = ('Generate?', 'Name', 'URL', 'Method')
     _requests = {}
     _hasScript = False
 
@@ -164,10 +165,15 @@ class BurpExtender(IBurpExtender, ITab):
         self._reqTable.getTableHeader().setReorderingAllowed(False)
         self._reqTable.setAutoResizeMode(swing.JTable.AUTO_RESIZE_LAST_COLUMN)
         self._reqTable.getTableHeader().setReorderingAllowed(False)
-        self._reqTable.getColumnModel().getColumn(0).setMaxWidth(150)
-        self._reqTable.getColumnModel().getColumn(0).setMinWidth(150)
-        self._reqTable.getColumnModel().getColumn(2).setMaxWidth(150)
-        self._reqTable.getColumnModel().getColumn(2).setMinWidth(150)
+        
+        model = self._reqTable.getColumnModel()
+        model.getColumn(0).setMaxWidth(150)
+        model.getColumn(0).setMinWidth(150)
+        model.getColumn(1).setMinWidth(50)
+        model.getColumn(2).setMinWidth(50)
+        model.getColumn(3).setMaxWidth(150)
+        model.getColumn(3).setMinWidth(150)
+        
         scrl2 = swing.JScrollPane(self._reqTable)
         reqTablePane.add(scrl2)
         # ### end requests
@@ -515,7 +521,7 @@ Name/Group                          Method  Details
                 if not url:
                     self.warn("Endpoint '{}' has no URL".format(name))
                 
-                else:
+                else:                        
 
                     self._findEnvInString(url)
 
@@ -603,7 +609,7 @@ Name/Group                          Method  Details
                         'body': body,
                         'headers': headers
                     })
-                    self._reqTable.getModel().addRow([True, name, req.get('method').upper()])
+                    self._reqTable.getModel().addRow([True, name, url, req.get('method').upper()])
                     self.log('')
 
             # recur
